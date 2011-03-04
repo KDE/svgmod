@@ -1,0 +1,71 @@
+To get a colorscheme aware svg there are four steps needed:
+* Define which system colors you want to use.
+* Create the svg like you are used to but use one defined color at places
+where on system color should take effect.
+* Add the corresponding classes to your svg with svgmod -a
+* Transform elements using a defined color to the corresponding system color
+with svgmod -c
+
+A little example:
+Say that we want to use window background and window text colors.
+Now we create our svg and use color #123456 for text and #abcdef for the
+background. We don't use this colors in any other place. (For now, you need to
+apply this colors to the elements directly, so don't put them in gradients.
+Also don't try to use different system colors for fill and stroke of the same
+element. This limitations should go away in future versions of svgmod.)
+After that we need to add the classes ColorScheme-Background and ColorScheme-
+Text to the svg in a style with id current-color-scheme:
+
+svgmod -a current-color-scheme ColorScheme-Background '#e0e0e0' \
+       -a current-color-scheme ColorScheme-Text '#000000' \
+       graphic.svg
+
+The colors #e0e0e0 and #000000 are the colors you see if the svg is not
+processed by plasma. This happens for versions before 4.6 and if you look at
+the graphics with a svg viewer or editor. You are free to choose which ever
+colors you like for that.
+In the last step we need to finaly replace the colors #123456 and #abcdef with
+our classes. This is as simple as:
+
+svgmod -c '#123456' ColorScheme-Text \
+       -c '#abcdef' ColorScheme-Background \
+       graphic.svg
+
+Some things to keep in mind:
+Put the colors in quotation marks to prevent the shell from interpreting
+charakters like # and ().
+The commands modify the graphic itself. So if you need the original file, make
+a copy before using svgmod or use the -b switch to create a backup. But be
+aware of the fact that -b overwrites an existing backup.
+
+
+Recognized color formats:
+
+named: red, green, blue, ...
+hex: #f00, #00ff00, ...
+rgb: rgb(255,0,0), rgb(0%,100%,0%), ...
+
+
+Limitations:
+
+System colors in gradients are very limited. Currently you can use only one
+per gradient.
+The rendering engine of Qt can handle a maximum of two system colors but they
+can be changed only once. See this example:
+
+<g class="ColorScheme-Background">
+  <linearGradient>
+    <stop stop-color="currentColor" offset="0" />
+    <g class="ColorScheme-Text"><!-- first change -->
+      <stop stop-color="currentColor" offset="0.25" />
+      <g class="ColorScheme-ButtonText"><!-- second change -->
+        <stop stop-color="currentColor" offset="0.5" />
+      </g><!-- third change -->
+      <stop stop-color="currentColor" offset="0.75" />
+    </g><!-- fourth change -->
+    <stop stop-color="currentColor" offset="1" />
+  </linearGradient>
+</g>
+
+Qt's renderer handels only the first change therefore all stops starting from
+offset 0.25 will get its color from 'ColorScheme-Text'
